@@ -1,0 +1,17 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# Node (仅测试脚本使用，非运行时依赖)
+node_modules/
+package-lock.json
+npm-debug.log*
+
+# 临时导出与调试产物
+*.tmp
+*.log
+export-check.png

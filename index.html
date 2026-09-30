@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公司放假通知生成器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c8102e'/%3E%3Ctext x='16' y='23' font-size='18' font-weight='bold' text-anchor='middle' fill='%23fff' font-family='sans-serif'%3E休%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">休</span>
+    <div class="brand-text">
+      <h1>公司放假通知生成器</h1>
+      <p>填写内容 → 自动生成日历 → 一键导出图片 / PDF</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" id="btnReset" type="button">重置</button>
+    <button class="btn btn-ghost" id="btnPrint" type="button">打印 / 存 PDF</button>
+    <button class="btn btn-primary" id="btnExport" type="button">下载图片</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ 左：编辑区 ============ -->
+  <section class="editor">
+
+    <div class="panel" id="panelTemplate">
+      <h2 class="panel-title"><i class="dot"></i>模板风格</h2>
+      <div class="chips" id="templateChips">
+        <button type="button" class="chip active" data-tpl="poster">海报款 · 微信推文风</button>
+        <button type="button" class="chip" data-tpl="official">公文款 · 红头通知</button>
+      </div>
+      <p class="hint">海报款适合微信群 / 朋友圈 / 公众号转发；公文款适合正式发文与打印归档。</p>
+    </div>
+
+    <div class="panel" id="panelPoster">
+      <h2 class="panel-title"><i class="dot"></i>海报内容</h2>
+      <div class="grid-2">
+        <label class="field">
+          <span>顶部标语</span>
+          <input type="text" id="f-p-slogan" value="欢度国庆 共谱华章" placeholder="如：欢度春节 阖家团圆">
+        </label>
+        <label class="field">
+          <span>主标题（书法大字）</span>
+          <input type="text" id="f-p-title" value="欢度国庆" placeholder="如：欢度国庆 / 恭贺新禧">
+        </label>
+        <label class="field">
+          <span>日历标题</span>
+          <input type="text" id="f-p-calname" value="放假日历">
+        </label>
+        <label class="field">
+          <span>底部祝福</span>
+          <input type="text" id="f-p-wish" value="国庆节快乐">
+        </label>
+        <label class="field">
+          <span>底部英文标签</span>
+          <input type="text" id="f-p-wish-en" value="2026 NATIONAL DAY">
+        </label>
+      </div>
+      <label class="field">
+        <span>配图（可选，建议横图；不上传则使用默认插图）</span>
+        <div class="photo-row">
+          <input type="file" id="f-photo" accept="image/*">
+          <button type="button" class="btn btn-ghost btn-mini" id="btnPhotoClear">清除配图</button>
+        </div>
+      </label>
+      <div class="field">
+        <span>内容板块（自动编号 01 / 02 / 03 …，可增删改）</span>
+        <div id="sectionList"></div>
+        <div><button type="button" class="btn btn-soft" id="btnAddSection">＋ 添加板块</button></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelCompany">
+      <h2 class="panel-title"><i class="dot"></i>公司信息与落款</h2>
+      <div class="grid-2">
+        <label class="field">
+          <span>公司名称</span>
+          <input type="text" id="f-company" value="河南盈友信息技术有限公司" placeholder="请输入公司全称">
+        </label>
+        <label class="field">
+          <span>通知标题</span>
+          <input type="text" id="f-title" value="关于2026年国庆节放假安排的通知" placeholder="请输入通知标题">
+        </label>
+        <label class="field">
+          <span>发文部门</span>
+          <input type="text" id="f-dept" value="行政人事部" placeholder="如：行政人事部">
+        </label>
+        <label class="field">
+          <span>落款日期</span>
+          <input type="date" id="f-date" value="2026-09-18">
+        </label>
+      </div>
+      <label class="field">
+        <span>称谓（正文开头）</span>
+        <input type="text" id="f-salutation" value="公司全体员工" placeholder="如：公司全体员工">
+      </label>
+    </div>
+
+    <div class="panel" id="panelCal">
+      <h2 class="panel-title"><i class="dot"></i>假期选择与日期调整</h2>
+
+      <div class="field">
+        <span>快速填充法定节假日安排</span>
+        <div class="chips" id="festivalChips"></div>
+        <p class="hint">点击节日可自动填充放假 / 调休日期；填充后仍可在下方日历中点击微调。</p>
+      </div>
+
+      <div class="grid-3">
+        <label class="field">
+          <span>假期开始</span>
+          <input type="date" id="f-start" value="2026-10-01">
+        </label>
+        <label class="field">
+          <span>假期结束</span>
+          <input type="date" id="f-end" value="2026-10-07">
+        </label>
+        <label class="field">
+          <span>放假天数（自动）</span>
+          <input type="text" id="f-days" value="7" readonly class="readonly">
+        </label>
+      </div>
+
+      <label class="field">
+        <span>调休上班日期（多个用逗号或顿号分隔）</span>
+        <input type="text" id="f-workdays" value="2026-09-20, 2026-10-10" placeholder="如：2026-09-20, 2026-10-10">
+      </label>
+
+      <div class="calendar-head">
+        <div class="field inline">
+          <span>日历月份</span>
+          <select id="f-month"></select>
+        </div>
+        <div class="legend">
+          <span class="lg"><i class="sw sw-off"></i>放假</span>
+          <span class="lg"><i class="sw sw-work"></i>调休上班</span>
+          <span class="lg"><i class="sw sw-weekend"></i>周末</span>
+          <span class="lg"><i class="sw sw-normal"></i>正常工作日</span>
+        </div>
+      </div>
+
+      <div class="cal-wrap">
+        <div class="cal-nav">
+          <button type="button" class="btn btn-mini" id="btnPrevMonth">‹ 上月</button>
+          <span class="cal-title" id="calTitle">2026年10月</span>
+          <button type="button" class="btn btn-mini" id="btnNextMonth">下月 ›</button>
+          <span class="cal-tip">提示：点击任意日期可切换「放假 / 调休上班 / 取消」</span>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+
+      <div class="row-actions">
+        <button type="button" class="btn btn-soft" id="btnClearCal">清空日历标记</button>
+        <button type="button" class="btn btn-soft" id="btnSelectRange">用「假期开始/结束」区间框选</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panelBody">
+      <h2 class="panel-title"><i class="dot"></i>正文内容</h2>
+      <label class="field">
+        <span>正文段落（放假说明）</span>
+        <textarea id="f-body" rows="4">根据《国务院办公厅关于2026年部分节假日安排的通知》精神，结合公司实际经营情况，现将2026年国庆节放假安排通知如下：</textarea>
+      </label>
+      <label class="field">
+        <span>逐条安排（每行一条，自动加序号）</span>
+        <textarea id="f-items" rows="5">10月1日（周四）至10月7日（周三）放假调休，共7天；
+9月20日（周日）、10月10日（周六）正常上班；
+放假期间，各部门要妥善安排好值班和安全保卫工作。</textarea>
+      </label>
+      <label class="field">
+        <span>结尾要求（每行一条，自动加序号）</span>
+        <textarea id="f-requirements" rows="3">请各部门于放假前完成工作交接，关闭电源、门窗，做好防火防盗检查；
+值班人员须保持通讯畅通，遇有重大突发事件，按规定及时报告并妥善处置；
+全体员工注意出行安全，合理安排返程时间，确保节后按时到岗。</textarea>
+      </label>
+    </div>
+
+    <div class="panel" id="panelDuty">
+      <h2 class="panel-title"><i class="dot"></i>值班与备注栏</h2>
+      <label class="field">
+        <span>值班安排（每行一条）</span>
+        <textarea id="f-duty" rows="3">值班电话：0371-8888 6666（24小时）
+总值班：张主任 138-0000-0000
+值班时间：每日 09:00 — 17:00</textarea>
+      </label>
+      <label class="field">
+        <span>注意事项 / 备注</span>
+        <textarea id="f-notes" rows="3">节后 10月8日（周四）正常上班，请各位同事提前规划返程；
+放假期间 ERP 系统正常开放远程访问，如遇系统问题请联系信息部。</textarea>
+      </label>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title"><i class="dot"></i>样式设置</h2>
+      <div class="grid-2">
+        <label class="field">
+          <span>背景样式</span>
+          <select id="f-bgmode">
+            <option value="festival" selected>节日氛围（自动匹配节日）</option>
+            <option value="plain">纯色简洁</option>
+            <option value="none">无背景（纯白）</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>配色主题</span>
+          <select id="f-theme">
+            <option value="auto" selected>跟随节日自动匹配</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint">选择左侧节日时会自动套用对应的配色与背景；也可在此手动指定。</p>
+      <label class="field">
+        <span>导出图片清晰度</span>
+        <select id="f-scale">
+          <option value="2">标准（2倍，约 1400px 宽）</option>
+          <option value="3" selected>高清（3倍，约 2100px 宽）</option>
+          <option value="4">超清（4倍，约 2800px 宽）</option>
+        </select>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="f-autophoto" checked>
+        <span>未上传配图时，使用节日专属默认插图</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="f-seal" checked>
+        <span>在落款处显示公司印章样式</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="f-showHl" checked>
+        <span>日历中显示假期高亮条（公文款）</span>
+      </label>
+    </div>
+
+  </section>
+
+  <!-- ============ 右：预览区 ============ -->
+  <section class="preview">
+    <div class="preview-bar">
+      <span class="preview-label">实时预览</span>
+      <span class="preview-note">导出图片所见即所得</span>
+    </div>
+    <div class="preview-scroll">
+      <div id="capture">
+        <div class="notice poster" id="noticePoster">
+          <div class="p-inner">
+
+            <div class="p-slogan-bar">
+              <i class="p-star s1">★</i>
+              <span class="p-slogan" id="p-slogan"></span>
+              <i class="p-star s2">★</i>
+            </div>
+
+            <div class="p-banner">
+              <h1 class="p-callig" id="p-title"></h1>
+            </div>
+
+            <div class="p-photo-wrap">
+              <img class="p-photo" id="p-photo-img" alt="节日配图">
+              <div class="p-photo-mark p-callig" id="p-photo-mark"></div>
+            </div>
+
+            <div class="p-divider">
+              <span class="p-line l"></span>
+              <span class="p-flag-circle">
+                <svg viewBox="0 0 40 40"><rect x="9" y="5" width="2.6" height="30" rx="1.3" fill="#c8102e"/><path d="M11.6 7c5.5-2.8 10 2.8 15.5 0v11c-5.5 2.8-10-2.8-15.5 0z" fill="#e8413c"/></svg>
+              </span>
+              <span class="p-line r"></span>
+            </div>
+
+            <div class="p-banner p-banner2">
+              <h1 class="p-callig" id="p-title2"></h1>
+            </div>
+
+            <div class="p-ribbon-wrap">
+              <svg class="p-ribbon" viewBox="0 0 220 50" width="220" height="50">
+                <polygon points="26,0 194,0 220,48 0,48" fill="var(--p-ribbon-fill, #c01722)"/>
+                <text id="p-ribbon-text" x="110" y="32" text-anchor="middle" font-size="21" fill="#ffffff">放假日历</text>
+              </svg>
+            </div>
+
+            <div class="p-cal" id="p-cal"></div>
+
+            <div class="p-cal-mark p-callig" id="p-mark2"></div>
+
+            <div class="p-sections" id="p-sections"></div>
+
+            <div class="p-footer">
+              <svg class="p-temple" viewBox="0 0 48 48">
+                <g fill="#ffffff">
+                  <circle cx="24" cy="6.5" r="2.2"/>
+                  <path d="M14 15c3-4.5 6.5-6.5 10-6.5s7 2 10 6.5l-2.6 1C29.5 12.6 27 11.5 24 11.5s-5.5 1.1-7.4 4.5z"/>
+                  <path d="M8 25c4.5-6.5 10-9.5 16-9.5S35.5 18.5 40 25l-3 1.2C33.6 21 29 18.6 24 18.6S14.4 21 11 26.2z"/>
+                  <rect x="14" y="28" width="20" height="3" rx="1.2"/>
+                  <rect x="16.5" y="33" width="15" height="3" rx="1.2"/>
+                  <rect x="12" y="38" width="24" height="3" rx="1.2"/>
+                </g>
+              </svg>
+              <div class="p-footer-txt">
+                <span class="p-wish" id="p-wish"></span>
+                <span class="p-wish-en" id="p-wish-en"></span>
+              </div>
+              <svg class="p-footer-fw" viewBox="0 0 64 64">
+                <g fill="none" stroke-linecap="round">
+                  <g stroke="#ffd98e" stroke-width="3">
+                    <path d="M32 10v10"/><path d="M17 17l7 7"/><path d="M47 17l-7 7"/><path d="M12 34h10"/><path d="M42 34h10"/>
+                  </g>
+                  <g stroke="#ffffff" stroke-width="2" opacity=".85">
+                    <path d="M24 12l3 8"/><path d="M40 12l-3 8"/><path d="M16 26l8 3"/><path d="M48 26l-8 3"/>
+                  </g>
+                </g>
+                <circle cx="32" cy="30" r="3" fill="#ffd98e"/>
+              </svg>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="notice" id="notice">
+          <div class="notice-inner">
+
+            <header class="n-head">
+              <div class="n-company" id="n-company"></div>
+              <h1 class="n-title" id="n-title"></h1>
+              <div class="n-rule"><span></span><i></i><span></span></div>
+            </header>
+
+            <div class="n-body">
+              <p class="n-salutation" id="n-salutation"></p>
+              <p class="n-para" id="n-body-para"></p>
+              <ol class="n-list" id="n-items"></ol>
+              <ol class="n-list" id="n-requirements"></ol>
+            </div>
+
+            <section class="n-cal">
+              <div class="n-cal-head">
+                <h2 id="n-cal-title"></h2>
+                <div class="n-cal-sub" id="n-cal-sub"></div>
+              </div>
+              <div class="cal-months" id="n-cal-months"></div>
+            </section>
+
+            <section class="n-extra">
+              <div class="extra-card" id="n-duty-card">
+                <h3>值班安排</h3>
+                <ul id="n-duty"></ul>
+              </div>
+              <div class="extra-card" id="n-notes-card">
+                <h3>注意事项</h3>
+                <ul id="n-notes"></ul>
+              </div>
+            </section>
+
+            <div class="n-wish" id="n-wish">祝全体员工节日愉快、阖家幸福！</div>
+
+            <footer class="n-sign">
+              <div class="sign-left">
+                <div class="sign-dept" id="n-dept"></div>
+                <div class="sign-date" id="n-date"></div>
+              </div>
+              <div class="sign-seal" id="n-seal">
+                <span class="seal-top">★</span>
+                <span class="seal-mid" id="n-seal-name"></span>
+                <span class="seal-bot">公 章</span>
+              </div>
+            </footer>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/lunar.js"></script>
+<script src="holidays.js"></script>
+<script src="themes.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
